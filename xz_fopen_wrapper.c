@@ -7,11 +7,44 @@ struct php_xz_stream_data_t {
   lzma_stream strm;
   size_t in_buf_sz;
   size_t out_buf_sz;
-  char *in_buf;
-  char *out_buf;
+  uint8_t *in_buf;
+  uint8_t *out_buf;
+  uint8_t *out_buf_idx; //only used for decompressing
   php_stream *stream;
   int fd;
+  char mode[4];
 };
+
+static int php_xz_decompress(struct php_xz_stream_data_t *self)
+{
+  lzma_stream *strm = &self->strm;
+  lzma_action action = LZMA_RUN;
+
+  if (strm->avail_in == 0 && !php_stream_eof(self->stream)) {
+    fprintf(stderr, "avail_in is zero and not at end of file.\n");
+    strm->next_in = self->in_buf;
+    strm->avail_in = php_stream_read(self->stream, self->in_buf, self->in_buf_sz);
+    fprintf(stderr, "Read %d bytes from underlying file\n", strm->avail_in);
+
+    if (php_stream_eof(self->stream)) {
+      action = LZMA_FINISH;
+    }
+  }
+
+  lzma_ret ret = lzma_code(strm, action);
+
+  if (strm->avail_out == 0 && self->out_buf_idx == strm->next_out) {
+    //have read all bytes in output buffer in php_xziop_read()
+    strm->next_out = self->out_buf_idx = self->out_buf;
+    strm->avail_out = self->out_buf_sz;
+  }
+  fprintf(stderr, "Ret from lzma_code in decompress: %d\n", ret);
+  fprintf(stderr, "avail_out: %d\n", strm->avail_out);
+  fprintf(stderr, "out_buf_idx: %08x\n", self->out_buf_idx);
+  fprintf(stderr, "next_out: %08x\n", strm->next_out);
+}
+
+
 
 static int php_xz_compress(struct php_xz_stream_data_t *self)
 {
@@ -51,12 +84,26 @@ static int php_xz_init_decoder(struct php_xz_stream_data_t *self)
     self->out_buf_sz = XZ_OUTBUF_SIZE;
     self->in_buf = emalloc(self->in_buf_sz);
     self->out_buf = emalloc(self->out_buf_sz);
+    self->out_buf_idx = self->out_buf;
     strm->next_in = self->in_buf;
     strm->avail_in = 0;
     strm->next_out = self->out_buf;
     strm->avail_out = self->out_buf_sz;
     return 1;
   }
+  const char *msg;
+  switch(ret) {
+    case LZMA_MEM_ERROR:
+      msg = "Memory allocation";
+      break;
+    case LZMA_OPTIONS_ERROR:
+      msg = "Unsupported decompress flags";
+      break;
+    default:
+      msg = "Unknown";
+      break;
+  }
+  fprintf(stderr, "Failed to init decoder: %s\n", msg);
   return 0;
 }
 
@@ -115,9 +162,31 @@ static size_t php_xziop_read(php_stream *stream, char *buf, size_t count TSRMLS_
   lzma_stream *strm = &self->strm;
 
   size_t to_read = count;
-    
+  size_t have_read = 0;
 
-  return 0;
+
+  while (to_read > 0) {
+
+    if (to_read < strm->next_out - self->out_buf_idx) {
+      memcpy(buf + have_read, self->out_buf_idx, to_read);
+      self->out_buf_idx += to_read;
+      have_read += to_read;
+      break;
+    } else if (strm->next_out - self->out_buf_idx > 0) {
+      memcpy(buf + have_read, self->out_buf_idx, strm->next_out - self->out_buf_idx);
+      have_read += strm->next_out - self->out_buf_idx;
+      to_read -= strm->next_out - self->out_buf_idx;
+      //push idx and next out back to beginning of buf so we don't always have to grow the out buffer.
+      self->out_buf_idx = self->out_buf;
+      strm->next_out = self->out_buf;
+      continue;
+    }
+
+
+    php_xz_decompress(self);
+  }
+
+  return have_read;
 }
 
 static size_t php_xziop_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
@@ -163,21 +232,24 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
   int ret = EOF;
 
   lzma_stream *strm = &self->strm;
-  if (strm->avail_in > 0) {
-    php_stream_flush(stream);
-  }
-  strm->next_out = self->out_buf;
-  strm->avail_out = self->out_buf_sz;
-  lzma_action action = LZMA_FINISH;
-  lzma_ret lz_ret = lzma_code(strm, action);
-
-  if (lz_ret == LZMA_STREAM_END) {
-    fprintf(stderr, "LZMA_STREAM_END\n");
-    if (strm->avail_out < self->out_buf_sz) {
-      size_t write_size = self->out_buf_sz - strm->avail_out;
-      php_stream_write(self->stream, self->out_buf, write_size);
+  //if write mode, finish writing out lzma stuff.
+  if (strcmp(self->mode, "w") == 0) {
+    if (strm->avail_in > 0) {
+      php_stream_flush(stream);
     }
-
+    strm->next_out = self->out_buf;
+    strm->avail_out = self->out_buf_sz;
+    lzma_action action = LZMA_FINISH;
+    lzma_ret lz_ret = lzma_code(strm, action);
+  
+    if (lz_ret == LZMA_STREAM_END) {
+      fprintf(stderr, "LZMA_STREAM_END\n");
+      if (strm->avail_out < self->out_buf_sz) {
+        size_t write_size = self->out_buf_sz - strm->avail_out;
+        php_stream_write(self->stream, self->out_buf, write_size);
+      }
+  
+    }
   }
 
   lzma_end(&self->strm);
@@ -191,6 +263,8 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
       self->stream = NULL;
     }
   }
+  efree(self->in_buf);
+  efree(self->out_buf);
   efree(self);
 
   return ret;
@@ -199,8 +273,9 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
 static int php_xziop_flush(php_stream *stream TSRMLS_DC)
 {
   struct php_xz_stream_data_t *self = (struct php_xz_stream_data_t *) stream->abstract;
-  int wrote = php_xz_compress(self);
-  fprintf(stderr, "Flush called: %d\n", wrote);
+  if (strcmp(self->mode, "w") == 0) {
+    php_xz_compress(self);
+  }
   return 0;
 }
 
@@ -248,9 +323,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
             php_stream_close(stream);
             return NULL;
           }
-        }
-
-        if (strcmp(mode, "r") == 0) {
+        } else if (strcmp(mode, "r") == 0) {
           if (!php_xz_init_decoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz decoder");
             close(fd);
@@ -259,8 +332,16 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
             php_stream_close(stream);
             return NULL;
           }
+        } else {
+          php_error_docref(NULL TSRMLS_CC, E_WARNING, "Can only open in read (r) or write (w) mode.");
+          close(fd);
+          php_stream_close(innerstream);
+          efree(self);
+          php_stream_close(stream);
+          return NULL;
         }
 
+        strncpy(self->mode, mode, 4);
         return stream;
       }
 
