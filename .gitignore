@@ -1,6 +1,20 @@
 # Object files
+.deps
+.libs
 *.o
-
+Makefile*
+autom4te.cache
+ac*.m4
+build
+config*
+install-sh
+libtool
+ltmain.sh
+missing
+mkinstalldirs
+run-tests.php
+*.la
+*.lo
 # Libraries
 *.lib
 *.a

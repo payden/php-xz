@@ -53,8 +53,6 @@ static int php_xz_decompress(struct php_xz_stream_data_t *self)
   }
 }
 
-
-
 static int php_xz_compress(struct php_xz_stream_data_t *self)
 {
   //this function will attempt to consume all bytes in lzma_stream->next_in
@@ -136,7 +134,7 @@ static int php_xz_init_encoder(struct php_xz_stream_data_t *self)
     strm->next_out = self->out_buf;
     return 1;
   }
-  
+
   /*const char *msg;
   switch (ret) {
     case LZMA_MEM_ERROR:
@@ -178,17 +176,17 @@ static size_t php_xziop_read(php_stream *stream, char *buf, size_t count TSRMLS_
       memcpy(buf + have_read, self->out_buf_idx, strm->next_out - self->out_buf_idx);
       have_read += strm->next_out - self->out_buf_idx;
       to_read -= strm->next_out - self->out_buf_idx;
-			self->out_buf_idx = strm->next_out;
-			if (strm->next_out == self->out_buf_idx) {
-				self->out_buf_idx = strm->next_out = self->out_buf;
-				strm->avail_out = self->out_buf_sz;
-			}
+      self->out_buf_idx = strm->next_out;
+      if (strm->next_out == self->out_buf_idx) {
+        self->out_buf_idx = strm->next_out = self->out_buf;
+        strm->avail_out = self->out_buf_sz;
+      }
     }
-		
-		if (self->out_buf_idx == strm->next_out && php_stream_eof(self->stream) && strm->avail_in == 0) {
-			stream->eof = 1;
-			return have_read;
-		}
+
+    if (self->out_buf_idx == strm->next_out && php_stream_eof(self->stream) && strm->avail_in == 0) {
+      stream->eof = 1;
+      return have_read;
+    }
 
     php_xz_decompress(self);
   }

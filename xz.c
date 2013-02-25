@@ -38,18 +38,18 @@ static int le_xz;
 
 
 ZEND_BEGIN_ARG_INFO(arginfo_xzread, 0)
-	ZEND_ARG_INFO(0, fp)
-	ZEND_ARG_INFO(0, length)
+  ZEND_ARG_INFO(0, fp)
+  ZEND_ARG_INFO(0, length)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_xzwrite, 0)
-	ZEND_ARG_INFO(0, fp)
-	ZEND_ARG_INFO(0, str)
-	ZEND_ARG_INFO(0, length)
+  ZEND_ARG_INFO(0, fp)
+  ZEND_ARG_INFO(0, str)
+  ZEND_ARG_INFO(0, length)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_xzclose, 0)
-	ZEND_ARG_INFO(0, fp)
+  ZEND_ARG_INFO(0, fp)
 ZEND_END_ARG_INFO()
 
 /* {{{ xz_functions[]
@@ -58,10 +58,10 @@ ZEND_END_ARG_INFO()
  */
 const zend_function_entry xz_functions[] = {
   PHP_FE(xzopen, NULL)
-	PHP_FALIAS(xzread, fread, arginfo_xzread)
-	PHP_FALIAS(xzwrite, fwrite, arginfo_xzwrite)
-	PHP_FALIAS(xzclose, fclose, arginfo_xzclose)
-	PHP_FE_END	/* Must be the last line in xz_functions[] */
+  PHP_FALIAS(xzread, fread, arginfo_xzread)
+  PHP_FALIAS(xzwrite, fwrite, arginfo_xzwrite)
+  PHP_FALIAS(xzclose, fclose, arginfo_xzclose)
+  PHP_FE_END  /* Must be the last line in xz_functions[] */
 };
 /* }}} */
 
@@ -69,19 +69,19 @@ const zend_function_entry xz_functions[] = {
  */
 zend_module_entry xz_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
-	STANDARD_MODULE_HEADER,
+  STANDARD_MODULE_HEADER,
 #endif
-	"xz",
-	xz_functions,
-	PHP_MINIT(xz),
-	PHP_MSHUTDOWN(xz),
-	PHP_RINIT(xz),		/* Replace with NULL if there's nothing to do at request start */
-	PHP_RSHUTDOWN(xz),	/* Replace with NULL if there's nothing to do at request end */
-	PHP_MINFO(xz),
+  "xz",
+  xz_functions,
+  PHP_MINIT(xz),
+  PHP_MSHUTDOWN(xz),
+  PHP_RINIT(xz),    /* Replace with NULL if there's nothing to do at request start */
+  PHP_RSHUTDOWN(xz),  /* Replace with NULL if there's nothing to do at request end */
+  PHP_MINFO(xz),
 #if ZEND_MODULE_API_NO >= 20010901
-	"0.1", /* Replace with version number for your extension */
+  "0.1", /* Replace with version number for your extension */
 #endif
-	STANDARD_MODULE_PROPERTIES
+  STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
 
@@ -104,8 +104,8 @@ PHP_INI_END()
 /* Uncomment this function if you have INI entries
 static void php_xz_init_globals(zend_xz_globals *xz_globals)
 {
-	xz_globals->global_value = 0;
-	xz_globals->global_string = NULL;
+  xz_globals->global_value = 0;
+  xz_globals->global_string = NULL;
 }
 */
 /* }}} */
@@ -114,10 +114,10 @@ static void php_xz_init_globals(zend_xz_globals *xz_globals)
  */
 PHP_MINIT_FUNCTION(xz)
 {
-	/* If you have INI entries, uncomment these lines 
-	REGISTER_INI_ENTRIES();
-	*/
-	return SUCCESS;
+  /* If you have INI entries, uncomment these lines 
+  REGISTER_INI_ENTRIES();
+  */
+  return SUCCESS;
 }
 /* }}} */
 
@@ -125,10 +125,10 @@ PHP_MINIT_FUNCTION(xz)
  */
 PHP_MSHUTDOWN_FUNCTION(xz)
 {
-	/* uncomment this line if you have INI entries
-	UNREGISTER_INI_ENTRIES();
-	*/
-	return SUCCESS;
+  /* uncomment this line if you have INI entries
+  UNREGISTER_INI_ENTRIES();
+  */
+  return SUCCESS;
 }
 /* }}} */
 
@@ -137,7 +137,7 @@ PHP_MSHUTDOWN_FUNCTION(xz)
  */
 PHP_RINIT_FUNCTION(xz)
 {
-	return SUCCESS;
+  return SUCCESS;
 }
 /* }}} */
 
@@ -146,7 +146,7 @@ PHP_RINIT_FUNCTION(xz)
  */
 PHP_RSHUTDOWN_FUNCTION(xz)
 {
-	return SUCCESS;
+  return SUCCESS;
 }
 /* }}} */
 
@@ -154,14 +154,14 @@ PHP_RSHUTDOWN_FUNCTION(xz)
  */
 PHP_MINFO_FUNCTION(xz)
 {
-	php_info_print_table_start();
-	php_info_print_table_header(2, "xz support", "enabled");
-	php_info_print_table_header(2, "liblzma version", lzma_version_string());
-	php_info_print_table_end();
+  php_info_print_table_start();
+  php_info_print_table_header(2, "xz support", "enabled");
+  php_info_print_table_header(2, "liblzma version", lzma_version_string());
+  php_info_print_table_end();
 
-	/* Remove comments if you have entries in php.ini
-	DISPLAY_INI_ENTRIES();
-	*/
+  /* Remove comments if you have entries in php.ini
+  DISPLAY_INI_ENTRIES();
+  */
 }
 /* }}} */
 
