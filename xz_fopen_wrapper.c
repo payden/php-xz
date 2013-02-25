@@ -200,13 +200,13 @@ static size_t php_xziop_write(php_stream *stream, const char *buf, size_t count 
   int wrote = 0;
   int bytes_consumed = 0;
 
-  lzma_stream *lz_stream = &self->strm;
+  lzma_stream *strm = &self->strm;
 
-  while (count - wrote > self->in_buf_sz - lz_stream->avail_in) {
+  while (count - wrote > self->in_buf_sz - strm->avail_in) {
     //copy as many bytes into next_in buffer as we can
-    memcpy((void *)self->in_buf + lz_stream->avail_in, buf + wrote, self->in_buf_sz - lz_stream->avail_in);
-    wrote += self->in_buf_sz - lz_stream->avail_in;
-    lz_stream->avail_in += self->in_buf_sz - lz_stream->avail_in;
+    memcpy((void *)self->in_buf + strm->avail_in, buf + wrote, self->in_buf_sz - strm->avail_in);
+    wrote += self->in_buf_sz - strm->avail_in;
+    strm->avail_in = self->in_buf_sz;
     bytes_consumed = php_xz_compress(self);
     if (bytes_consumed < 0) {
       break;
@@ -214,9 +214,9 @@ static size_t php_xziop_write(php_stream *stream, const char *buf, size_t count 
   }
 
   if (count - wrote > 0) {
-    memcpy((void *)self->in_buf + lz_stream->avail_in, buf + wrote, count - wrote);
+    memcpy((void *)self->in_buf + strm->avail_in, buf + wrote, count - wrote);
 
-    lz_stream->avail_in += count - wrote;
+    strm->avail_in += count - wrote;
   }
   return count;
 }
