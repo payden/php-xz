@@ -52,6 +52,10 @@ ZEND_BEGIN_ARG_INFO(arginfo_xzclose, 0)
   ZEND_ARG_INFO(0, fp)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_INFO(arginfo_xzpassthru, 0)
+  ZEND_ARG_INFO(0, fp)
+ZEND_END_ARG_INFO()
+
 /* {{{ xz_functions[]
  *
  * Every user visible function must have an entry in xz_functions[].
@@ -61,6 +65,7 @@ const zend_function_entry xz_functions[] = {
   PHP_FALIAS(xzread, fread, arginfo_xzread)
   PHP_FALIAS(xzwrite, fwrite, arginfo_xzwrite)
   PHP_FALIAS(xzclose, fclose, arginfo_xzclose)
+  PHP_FALIAS(xzpassthru, fpassthru, arginfo_xzpassthru)
   PHP_FE_END  /* Must be the last line in xz_functions[] */
 };
 /* }}} */
