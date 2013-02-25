@@ -25,6 +25,7 @@
 #include "php.h"
 #include "php_ini.h"
 #include "ext/standard/info.h"
+#include "ext/standard/file.h"
 #include "php_xz.h"
 
 /* If you declare any globals in php_xz.h uncomment this:
@@ -34,12 +35,31 @@ ZEND_DECLARE_MODULE_GLOBALS(xz)
 /* True global resources - no need for thread safety here */
 static int le_xz;
 
+
+ZEND_BEGIN_ARG_INFO(arginfo_xzread, 0)
+	ZEND_ARG_INFO(0, fp)
+	ZEND_ARG_INFO(0, length)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_xzwrite, 0)
+	ZEND_ARG_INFO(0, fp)
+	ZEND_ARG_INFO(0, str)
+	ZEND_ARG_INFO(0, length)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_xzclose, 0)
+	ZEND_ARG_INFO(0, fp)
+ZEND_END_ARG_INFO()
+
 /* {{{ xz_functions[]
  *
  * Every user visible function must have an entry in xz_functions[].
  */
 const zend_function_entry xz_functions[] = {
   PHP_FE(xzopen, NULL)
+	PHP_FALIAS(xzread, fread, arginfo_xzread)
+	PHP_FALIAS(xzwrite, fwrite, arginfo_xzwrite)
+	PHP_FALIAS(xzclose, fclose, arginfo_xzclose)
 	PHP_FE_END	/* Must be the last line in xz_functions[] */
 };
 /* }}} */
@@ -155,7 +175,7 @@ PHP_FUNCTION(xzopen)
     return;
   }
 
-  stream = php_stream_xzopen(NULL, filename, mode, NULL, NULL STREAMS_CC TSRMLS_CC);
+  stream = php_stream_xzopen(NULL, filename, mode, 0, NULL, NULL STREAMS_CC TSRMLS_CC);
 
   if (!stream) {
     RETURN_FALSE;

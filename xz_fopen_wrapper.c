@@ -21,16 +21,10 @@ static int php_xz_decompress(struct php_xz_stream_data_t *self)
   lzma_action action = LZMA_RUN;
 
   if (strm->avail_in == 0 && !php_stream_eof(self->stream)) {
-    fprintf(stderr, "avail_in is zero and not at end of file.\n");
     strm->next_in = self->in_buf;
     strm->avail_in = php_stream_read(self->stream, self->in_buf, self->in_buf_sz);
-    fprintf(stderr, "Read %d bytes from underlying file\n", strm->avail_in);
 
-    if (php_stream_eof(self->stream)) {
-      action = LZMA_FINISH;
-    }
   }
-
   lzma_ret ret = lzma_code(strm, action);
 
   if (strm->avail_out == 0 && self->out_buf_idx == strm->next_out) {
@@ -38,10 +32,6 @@ static int php_xz_decompress(struct php_xz_stream_data_t *self)
     strm->next_out = self->out_buf_idx = self->out_buf;
     strm->avail_out = self->out_buf_sz;
   }
-  fprintf(stderr, "Ret from lzma_code in decompress: %d\n", ret);
-  fprintf(stderr, "avail_out: %d\n", strm->avail_out);
-  fprintf(stderr, "out_buf_idx: %08x\n", self->out_buf_idx);
-  fprintf(stderr, "next_out: %08x\n", strm->next_out);
 }
 
 
@@ -54,20 +44,15 @@ static int php_xz_compress(struct php_xz_stream_data_t *self)
   lzma_action action = LZMA_RUN;
   int wrote = 0;
   int to_write = strm->avail_in;
-  fprintf(stderr, "xz_compress called with avail_in: %d\n", strm->avail_in);
-  fprintf(stderr, "next_in at %08x\n", strm->next_in);
 
   while (strm->avail_in > 0) {
     lzma_ret ret = lzma_code(strm, action);
-    fprintf(stderr, "lzma_code ret: %d\n", ret);
     size_t write_size = self->out_buf_sz - strm->avail_out;
     wrote += php_stream_write(self->stream, self->out_buf, write_size);
     strm->next_out = self->out_buf;
     strm->avail_out = self->out_buf_sz;
   }
 
-  fprintf(stderr, "Resetting next_in to %08x\n", self->in_buf);
-  fprintf(stderr, "avail in for shits and giggles: %d\n", strm->avail_in);
   strm->next_in = self->in_buf;
 
   return to_write;
@@ -91,7 +76,7 @@ static int php_xz_init_decoder(struct php_xz_stream_data_t *self)
     strm->avail_out = self->out_buf_sz;
     return 1;
   }
-  const char *msg;
+  /*const char *msg;
   switch(ret) {
     case LZMA_MEM_ERROR:
       msg = "Memory allocation";
@@ -102,8 +87,7 @@ static int php_xz_init_decoder(struct php_xz_stream_data_t *self)
     default:
       msg = "Unknown";
       break;
-  }
-  fprintf(stderr, "Failed to init decoder: %s\n", msg);
+  }*/
   return 0;
 }
 
@@ -166,7 +150,6 @@ static size_t php_xziop_read(php_stream *stream, char *buf, size_t count TSRMLS_
 
 
   while (to_read > 0) {
-
     if (to_read < strm->next_out - self->out_buf_idx) {
       memcpy(buf + have_read, self->out_buf_idx, to_read);
       self->out_buf_idx += to_read;
@@ -176,12 +159,17 @@ static size_t php_xziop_read(php_stream *stream, char *buf, size_t count TSRMLS_
       memcpy(buf + have_read, self->out_buf_idx, strm->next_out - self->out_buf_idx);
       have_read += strm->next_out - self->out_buf_idx;
       to_read -= strm->next_out - self->out_buf_idx;
-      //push idx and next out back to beginning of buf so we don't always have to grow the out buffer.
-      self->out_buf_idx = self->out_buf;
-      strm->next_out = self->out_buf;
-      continue;
+			self->out_buf_idx = strm->next_out;
+			if (strm->next_out == self->out_buf_idx) {
+				self->out_buf_idx = strm->next_out = self->out_buf;
+				strm->avail_out = self->out_buf_sz;
+			}
     }
-
+		
+		if (self->out_buf_idx == strm->next_out && php_stream_eof(self->stream) && strm->avail_in == 0) {
+			stream->eof = 1;
+			return have_read;
+		}
 
     php_xz_decompress(self);
   }
@@ -194,34 +182,24 @@ static size_t php_xziop_write(php_stream *stream, const char *buf, size_t count 
   struct php_xz_stream_data_t *self = (struct php_xz_stream_data_t *) stream->abstract;
   int wrote = 0;
   int bytes_consumed = 0;
-  fprintf(stderr, "in write: buf, count: %08x, %d\n", buf, count);
 
   lzma_stream *lz_stream = &self->strm;
 
   while (count - wrote > self->in_buf_sz - lz_stream->avail_in) {
-    fprintf(stderr, "Count - wrote is greater than buf size - avail in\n");
-    fprintf(stderr, "Count - wrote: %d\n", count - wrote);
-    fprintf(stderr, "wrote: %d\n", wrote);
-    fprintf(stderr, "avail_in: %d\n", lz_stream->avail_in);
     //copy as many bytes into next_in buffer as we can
     memcpy((void *)self->in_buf + lz_stream->avail_in, buf + wrote, self->in_buf_sz - lz_stream->avail_in);
     wrote += self->in_buf_sz - lz_stream->avail_in;
     lz_stream->avail_in += self->in_buf_sz - lz_stream->avail_in;
-    fprintf(stderr, "avail_in incremented: %d\n", lz_stream->avail_in);
     bytes_consumed = php_xz_compress(self);
     if (bytes_consumed < 0) {
       break;
     }
   }
-  fprintf(stderr, "wrote out of loop: %d\n", wrote);
 
   if (count - wrote > 0) {
-
-    fprintf(stderr, "Copying remaining bytes to next_in.\n");
     memcpy((void *)self->in_buf + lz_stream->avail_in, buf + wrote, count - wrote);
 
     lz_stream->avail_in += count - wrote;
-    fprintf(stderr, "Incrementing avail_in for next go around: %d\n", lz_stream->avail_in);
   }
   return count;
 }
@@ -243,7 +221,6 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
     lzma_ret lz_ret = lzma_code(strm, action);
   
     if (lz_ret == LZMA_STREAM_END) {
-      fprintf(stderr, "LZMA_STREAM_END\n");
       if (strm->avail_out < self->out_buf_sz) {
         size_t write_size = self->out_buf_sz - strm->avail_out;
         php_stream_write(self->stream, self->out_buf, write_size);
@@ -356,5 +333,4 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
   }
   return NULL;
 }
-
 
