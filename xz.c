@@ -12,8 +12,9 @@
   | obtain it through the world-wide-web, please send a note to          |
   | license@php.net so we can mail you a copy immediately.               |
   +----------------------------------------------------------------------+
-  | Author:                                                              |
-  +----------------------------------------------------------------------+
+  | Author: Payden Sutherland <payden@paydensutherland.com>              |
+	|         Mostly looked at ext/zlib for guidance                       |
+	+----------------------------------------------------------------------+
 */
 
 /* $Id$ */
