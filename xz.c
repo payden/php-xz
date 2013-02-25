@@ -155,6 +155,7 @@ PHP_MINFO_FUNCTION(xz)
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "xz support", "enabled");
+	php_info_print_table_header(2, "liblzma version", lzma_version_string());
 	php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini
