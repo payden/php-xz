@@ -64,12 +64,10 @@ static int php_xz_compress(struct php_xz_stream_data_t *self)
 
   while (strm->avail_in > 0) {
     lzma_ret ret = lzma_code(strm, action);
-    if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
-      size_t write_size = self->out_buf_sz - strm->avail_out;
-      php_stream_write(self->stream, self->out_buf, write_size);
-      strm->next_out = self->out_buf;
-      strm->avail_out = self->out_buf_sz;
-    }
+    size_t write_size = self->out_buf_sz - strm->avail_out;
+    php_stream_write(self->stream, self->out_buf, write_size);
+    strm->next_out = self->out_buf;
+    strm->avail_out = self->out_buf_sz;
   }
 
   strm->next_in = self->in_buf;
@@ -241,6 +239,8 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
       if (strm->avail_out < self->out_buf_sz) {
         size_t write_size = self->out_buf_sz - strm->avail_out;
         php_stream_write(self->stream, self->out_buf, write_size);
+        strm->next_out = self->out_buf;
+        strm->avail_out = self->out_buf_sz;
       }
 
   
