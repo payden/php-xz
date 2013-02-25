@@ -23,7 +23,7 @@ $fh = xzopen("/tmp/test.xz", "w");
 xzwrite($fh, "Data you would like compressed and written.\n");
 xzclose($fh);
 $fh = xzopen("/tmp/test.xz", "r");
-echo xzread($fh, 1024);
+xzpassthru($fh);
 xzclose($fh);
 ?>
 ```
