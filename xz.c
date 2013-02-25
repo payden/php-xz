@@ -181,7 +181,6 @@ PHP_FUNCTION(xzopen)
   if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &filename, &filename_len, &mode, &mode_len) == FAILURE) {
     return;
   }
-
   stream = php_stream_xzopen(NULL, filename, mode, 0, NULL, NULL STREAMS_CC TSRMLS_CC);
 
   if (!stream) {

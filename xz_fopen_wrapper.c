@@ -64,10 +64,12 @@ static int php_xz_compress(struct php_xz_stream_data_t *self)
 
   while (strm->avail_in > 0) {
     lzma_ret ret = lzma_code(strm, action);
-    size_t write_size = self->out_buf_sz - strm->avail_out;
-    wrote += php_stream_write(self->stream, self->out_buf, write_size);
-    strm->next_out = self->out_buf;
-    strm->avail_out = self->out_buf_sz;
+    if (strm->avail_out == 0 || ret == LZMA_STREAM_END) {
+      size_t write_size = self->out_buf_sz - strm->avail_out;
+      php_stream_write(self->stream, self->out_buf, write_size);
+      strm->next_out = self->out_buf;
+      strm->avail_out = self->out_buf_sz;
+    }
   }
 
   strm->next_in = self->in_buf;
@@ -228,22 +230,21 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
 
   lzma_stream *strm = &self->strm;
   //if write mode, finish writing out lzma stuff.
-  if (strcmp(self->mode, "w") == 0) {
-    if (strm->avail_in > 0) {
-      php_stream_flush(stream);
-    }
-    strm->next_out = self->out_buf;
-    strm->avail_out = self->out_buf_sz;
-    lzma_action action = LZMA_FINISH;
-    lzma_ret lz_ret = lzma_code(strm, action);
-  
-    if (lz_ret == LZMA_STREAM_END) {
+  if (strcmp(self->mode, "w") == 0 || strcmp(self->mode, "wb") == 0) {
+    lzma_ret lz_ret;
+    do {
+      strm->next_out = self->out_buf;
+      strm->avail_out = self->out_buf_sz;
+      lzma_action action = LZMA_FINISH;
+      lz_ret = lzma_code(strm, action);
+
       if (strm->avail_out < self->out_buf_sz) {
         size_t write_size = self->out_buf_sz - strm->avail_out;
         php_stream_write(self->stream, self->out_buf, write_size);
       }
+
   
-    }
+    } while (lz_ret == LZMA_OK);
   }
 
   lzma_end(&self->strm);
@@ -264,9 +265,10 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
 static int php_xziop_flush(php_stream *stream TSRMLS_DC)
 {
   struct php_xz_stream_data_t *self = (struct php_xz_stream_data_t *) stream->abstract;
-  if (strcmp(self->mode, "w") == 0) {
+  if (strcmp(self->mode, "w") == 0 || strcmp(self->mode, "wb") == 0) {
     php_xz_compress(self);
   }
+  php_stream_flush(self->stream);
   return 0;
 }
 
@@ -305,7 +307,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
       if (stream) {
         stream->flags |= PHP_STREAM_FLAG_NO_BUFFER;
 
-        if (strcmp(mode, "w") == 0) {
+        if (strcmp(mode, "w") == 0 || strcmp(mode, "wb") == 0) {
           if (!php_xz_init_encoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz encoder.");
             php_stream_close(innerstream);
@@ -313,7 +315,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
             php_stream_close(stream);
             return NULL;
           }
-        } else if (strcmp(mode, "r") == 0) {
+        } else if (strcmp(mode, "r") == 0 || strcmp(mode, "rb") == 0) {
           if (!php_xz_init_decoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz decoder");
             php_stream_close(innerstream);
