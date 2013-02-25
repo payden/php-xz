@@ -7,9 +7,11 @@ PHP Extension providing xz (LZMA2) compression/decompression via PHP streams.
 
 To install as module, perform the following steps:
 
-$> cd /path/to/php-5.4.12/ext
-$> git clone https://github.com/payden/php-xz xz
-$> cd xz && phpize && ./configure && make && sudo make install
+**$>** cd /path/to/php-5.4.12/ext
+
+**$>** git clone https://github.com/payden/php-xz xz
+
+**$>** cd xz && phpize && ./configure && make && sudo make install
 
 Add 'extension = xz.so' to your php.ini.
 
