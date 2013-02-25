@@ -249,9 +249,6 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
   lzma_end(&self->strm);
 
   if (close_handle) {
-    if (self->fd) {
-      close(self->fd);
-    }
     if (self->stream) {
       php_stream_close(self->stream);
       self->stream = NULL;
@@ -311,7 +308,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
         if (strcmp(mode, "w") == 0) {
           if (!php_xz_init_encoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz encoder.");
-            close(fd);
             php_stream_close(innerstream);
             efree(self);
             php_stream_close(stream);
@@ -320,7 +316,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
         } else if (strcmp(mode, "r") == 0) {
           if (!php_xz_init_decoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz decoder");
-            close(fd);
             php_stream_close(innerstream);
             efree(self);
             php_stream_close(stream);
@@ -328,7 +323,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
           }
         } else {
           php_error_docref(NULL TSRMLS_CC, E_WARNING, "Can only open in read (r) or write (w) mode.");
-          close(fd);
           php_stream_close(innerstream);
           efree(self);
           php_stream_close(stream);
@@ -339,7 +333,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
         return stream;
       }
 
-      close(fd);
 
       efree(self);
 
