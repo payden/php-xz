@@ -302,6 +302,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
       self = ecalloc(1, sizeof(*self));
       self->stream = innerstream;
       self->fd = fd;
+      strncpy(self->mode, mode, sizeof(self->mode));
 
       stream = php_stream_alloc_rel(&php_stream_xzio_ops, self, 0, mode);
       if (stream) {
@@ -310,7 +311,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
         if (strcmp(mode, "w") == 0 || strcmp(mode, "wb") == 0) {
           if (!php_xz_init_encoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz encoder.");
-            php_stream_close(innerstream);
             efree(self);
             php_stream_close(stream);
             return NULL;
@@ -318,20 +318,17 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
         } else if (strcmp(mode, "r") == 0 || strcmp(mode, "rb") == 0) {
           if (!php_xz_init_decoder(self)) {
             php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not initialize xz decoder");
-            php_stream_close(innerstream);
             efree(self);
             php_stream_close(stream);
             return NULL;
           }
         } else {
           php_error_docref(NULL TSRMLS_CC, E_WARNING, "Can only open in read (r) or write (w) mode.");
-          php_stream_close(innerstream);
           efree(self);
           php_stream_close(stream);
           return NULL;
         }
 
-        strncpy(self->mode, mode, 4);
         return stream;
       }
 
