@@ -45,8 +45,9 @@ PHP_MSHUTDOWN_FUNCTION(xz);
 PHP_RINIT_FUNCTION(xz);
 PHP_RSHUTDOWN_FUNCTION(xz);
 PHP_MINFO_FUNCTION(xz);
-
 PHP_FUNCTION(xzopen);
+
+php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context STREAMS_DC TSRMLS_DC);
 /* 
   	Declare any global variables you may need between the BEGIN
 	and END macros here:     
