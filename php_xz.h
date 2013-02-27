@@ -23,6 +23,7 @@
 #define PHP_XZ_H
 
 extern zend_module_entry xz_module_entry;
+extern php_stream_wrapper php_stream_xz_wrapper;
 #define phpext_xz_ptr &xz_module_entry
 
 #define XZ_INBUF_SIZE 4096

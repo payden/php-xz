@@ -119,9 +119,7 @@ static void php_xz_init_globals(zend_xz_globals *xz_globals)
  */
 PHP_MINIT_FUNCTION(xz)
 {
-  /* If you have INI entries, uncomment these lines 
-  REGISTER_INI_ENTRIES();
-  */
+  php_register_url_stream_wrapper("compress.lzma", &php_stream_xz_wrapper TSRMLS_CC);
   return SUCCESS;
 }
 /* }}} */
@@ -130,9 +128,7 @@ PHP_MINIT_FUNCTION(xz)
  */
 PHP_MSHUTDOWN_FUNCTION(xz)
 {
-  /* uncomment this line if you have INI entries
-  UNREGISTER_INI_ENTRIES();
-  */
+  php_unregister_url_stream_wrapper("compress.lzma" TSRMLS_CC);
   return SUCCESS;
 }
 /* }}} */

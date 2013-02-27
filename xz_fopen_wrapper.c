@@ -293,6 +293,10 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
     return NULL;
   }
 
+  if (strncasecmp("compress.lzma://", path, 16) == 0) {
+    path += 16;
+  }
+
   innerstream = php_stream_open_wrapper_ex(path, mode, STREAM_MUST_SEEK | options | STREAM_WILL_CAST, opened_path, context);
 
   if (innerstream) {
@@ -342,4 +346,23 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
   }
   return NULL;
 }
+
+static php_stream_wrapper_ops xz_stream_wops = {
+  php_stream_xzopen,
+  NULL, /* close */
+  NULL, /* stat */
+  NULL, /* stat_url */
+  NULL, /* opendir */
+  "XZ",
+  NULL, /* unlink */
+  NULL, /* rename */
+  NULL, /* mkdir */
+  NULL /* rmdir */
+};
+
+php_stream_wrapper php_stream_xz_wrapper = {
+  &xz_stream_wops,
+  NULL,
+  0 /* is_url */
+};
 
