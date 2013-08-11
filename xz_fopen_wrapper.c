@@ -34,7 +34,7 @@ struct php_xz_stream_data_t {
   char mode[4];
 };
 
-static int php_xz_decompress(struct php_xz_stream_data_t *self)
+static int php_xz_decompress(struct php_xz_stream_data_t *self TSRMLS_DC)
 {
   lzma_stream *strm = &self->strm;
   lzma_action action = LZMA_RUN;
@@ -53,7 +53,7 @@ static int php_xz_decompress(struct php_xz_stream_data_t *self)
   }
 }
 
-static int php_xz_compress(struct php_xz_stream_data_t *self)
+static int php_xz_compress(struct php_xz_stream_data_t *self TSRMLS_DC)
 {
   //this function will attempt to consume all bytes in lzma_stream->next_in
   // and write to underlying file
@@ -188,7 +188,7 @@ static size_t php_xziop_read(php_stream *stream, char *buf, size_t count TSRMLS_
       return have_read;
     }
 
-    php_xz_decompress(self);
+    php_xz_decompress(self TSRMLS_CC);
   }
 
   return have_read;
@@ -207,7 +207,7 @@ static size_t php_xziop_write(php_stream *stream, const char *buf, size_t count 
     memcpy((void *)self->in_buf + strm->avail_in, buf + wrote, self->in_buf_sz - strm->avail_in);
     wrote += self->in_buf_sz - strm->avail_in;
     strm->avail_in = self->in_buf_sz;
-    bytes_consumed = php_xz_compress(self);
+    bytes_consumed = php_xz_compress(self TSRMLS_CC);
     if (bytes_consumed < 0) {
       break;
     }
@@ -266,7 +266,7 @@ static int php_xziop_flush(php_stream *stream TSRMLS_DC)
 {
   struct php_xz_stream_data_t *self = (struct php_xz_stream_data_t *) stream->abstract;
   if (strcmp(self->mode, "w") == 0 || strcmp(self->mode, "wb") == 0) {
-    php_xz_compress(self);
+    php_xz_compress(self TSRMLS_CC);
   }
   php_stream_flush(self->stream);
   return 0;
