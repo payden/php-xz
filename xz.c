@@ -28,6 +28,7 @@
 #include "ext/standard/info.h"
 #include "ext/standard/file.h"
 #include "php_xz.h"
+#include <lzma.h>
 
 /* If you declare any globals in php_xz.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(xz)
