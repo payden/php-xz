@@ -296,7 +296,6 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
   }
 
   unsigned long level = strtoul(colonp+1, NULL, 10);
-  fprintf(stderr, "in xzopen: %lu\n", level);
   *colonp = '\0'; //terminate string early.
 
   if (strchr(mode, '+') || strcmp(mode, "rw") == 0) {
