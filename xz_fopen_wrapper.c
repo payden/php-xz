@@ -32,6 +32,7 @@ struct php_xz_stream_data_t {
   php_stream *stream;
   int fd;
   char mode[4];
+  unsigned long level;
 };
 
 static int php_xz_decompress(struct php_xz_stream_data_t *self TSRMLS_DC)
@@ -112,7 +113,7 @@ static int php_xz_init_encoder(struct php_xz_stream_data_t *self)
 {
   lzma_stream *strm = &self->strm;
   lzma_options_lzma opt_lzma2;
-  if (lzma_lzma_preset(&opt_lzma2, LZMA_PRESET_DEFAULT)) {
+  if (lzma_lzma_preset(&opt_lzma2, self->level)) {
     return 0;
   }
   
@@ -287,9 +288,24 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
 {
   php_stream *stream = NULL, *innerstream = NULL;
   struct php_xz_stream_data_t *self;
+  //split compression level out of mode
+  char *colonp = strchr(mode, ':');
+  if (!colonp) {
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "xz extension internal error.");
+    return NULL;
+  }
+
+  unsigned long level = strtoul(colonp+1, NULL, 10);
+  fprintf(stderr, "in xzopen: %lu\n", level);
+  *colonp = '\0'; //terminate string early.
 
   if (strchr(mode, '+') || strcmp(mode, "rw") == 0) {
-    php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot open xz stream for reading and writing at the same time.");
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "cannot open xz stream for reading and writing at the same time.");
+    return NULL;
+  }
+
+  if (level > 9 || level < 0) {
+    php_error_docref(NULL TSRMLS_CC, E_ERROR, "Invalid compression level");
     return NULL;
   }
 
@@ -306,6 +322,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
       self = ecalloc(1, sizeof(*self));
       self->stream = innerstream;
       self->fd = fd;
+      self->level = level;
       strncpy(self->mode, mode, sizeof(self->mode));
 
       stream = php_stream_alloc_rel(&php_stream_xzio_ops, self, 0, mode);

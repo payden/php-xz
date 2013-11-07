@@ -171,14 +171,19 @@ PHP_MINFO_FUNCTION(xz)
 PHP_FUNCTION(xzopen)
 {
   char *filename;
-  char *mode;
+  char *mode, *mode_to_pass;
   int filename_len, mode_len;
   php_stream *stream;
+  unsigned long compression_level = 6;
 
-  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &filename, &filename_len, &mode, &mode_len) == FAILURE) {
+  if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|l", &filename, &filename_len, &mode, &mode_len, &compression_level) == FAILURE) {
     return;
   }
-  stream = php_stream_xzopen(NULL, filename, mode, 0, NULL, NULL STREAMS_CC TSRMLS_CC);
+  mode_to_pass = (char *) emalloc(mode_len + 20); //20 is just some arbitrary padding
+  snprintf(mode_to_pass, mode_len + 20, "%s:%lu", mode, compression_level);
+  efree(mode);
+
+  stream = php_stream_xzopen(NULL, filename, mode_to_pass, 0, NULL, NULL STREAMS_CC TSRMLS_CC);
 
   if (!stream) {
     RETURN_FALSE;
