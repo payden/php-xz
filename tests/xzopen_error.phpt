@@ -30,6 +30,6 @@ var_dump( xzopen($filename, $mode) );
 
 -- Testing xzopen() function with invalid mode --
 
-Warning: xzopen(): Can only open in read (r) or write (w) mode.
+Warning: xzopen(): Can only open in read (r) or write (w) mode.%s
 bool(false)
 ===DONE===

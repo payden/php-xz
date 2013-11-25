@@ -67,7 +67,11 @@ const zend_function_entry xz_functions[] = {
   PHP_FALIAS(xzwrite, fwrite, arginfo_xzwrite)
   PHP_FALIAS(xzclose, fclose, arginfo_xzclose)
   PHP_FALIAS(xzpassthru, fpassthru, arginfo_xzpassthru)
-  PHP_FE_END  /* Must be the last line in xz_functions[] */
+#ifndef PHP_FE_END
+  { NULL, NULL, NULL, 0, 0 }
+#else
+  PHP_FE_END
+#endif
 };
 /* }}} */
 
