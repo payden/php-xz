@@ -285,7 +285,7 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
     char **opened_path, php_stream_context *context STREAMS_DC TSRMLS_DC)
 {
   char mode[64];
-
+  unsigned long level = 6;
   php_stream *stream = NULL, *innerstream = NULL;
   struct php_xz_stream_data_t *self;
 
@@ -295,13 +295,11 @@ php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mod
 
   //split compression level out of mode
   char *colonp = strchr(mode, ':');
-  if (!colonp) {
-    php_error_docref(NULL TSRMLS_CC, E_ERROR, "xz extension internal error.");
-    return NULL;
+  if (colonp) {
+    level = strtoul(colonp+1, NULL, 10);
+    *colonp = '\0'; //terminate string early.
   }
 
-  unsigned long level = strtoul(colonp+1, NULL, 10);
-  *colonp = '\0'; //terminate string early.
 
   if (strchr(mode, '+') || strcmp(mode, "rw") == 0) {
     php_error_docref(NULL TSRMLS_CC, E_ERROR, "cannot open xz stream for reading and writing at the same time.");
