@@ -250,12 +250,10 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
 
   lzma_end(&self->strm);
 
-  if (close_handle) {
-    if (self->stream) {
-      php_stream_close(self->stream);
-      self->stream = NULL;
-    }
+  if (self->stream) {
+    php_stream_free(self->stream, PHP_STREAM_FREE_CLOSE | (close_handle == 0 ? PHP_STREAM_FREE_PRESERVE_HANDLE : 0));
   }
+
   efree(self->in_buf);
   efree(self->out_buf);
   efree(self);
@@ -283,11 +281,18 @@ php_stream_ops php_stream_xzio_ops = {
   NULL /* set_option */
 };
 
-php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mode, int options,
+php_stream *php_stream_xzopen(php_stream_wrapper *wrapper, char *path, char *mode_pass, int options,
     char **opened_path, php_stream_context *context STREAMS_DC TSRMLS_DC)
 {
+  char mode[64];
+
   php_stream *stream = NULL, *innerstream = NULL;
   struct php_xz_stream_data_t *self;
+
+  strncpy(mode, mode_pass, 63);
+  //we allocated this in PHP_FUNCTION manually, free it.
+  efree(mode_pass);
+
   //split compression level out of mode
   char *colonp = strchr(mode, ':');
   if (!colonp) {

@@ -185,7 +185,6 @@ PHP_FUNCTION(xzopen)
   }
   mode_to_pass = (char *) emalloc(mode_len + 20); //20 is just some arbitrary padding
   snprintf(mode_to_pass, mode_len + 20, "%s:%lu", mode, compression_level);
-  efree(mode);
 
   stream = php_stream_xzopen(NULL, filename, mode_to_pass, 0, NULL, NULL STREAMS_CC TSRMLS_CC);
 
