@@ -1,17 +1,17 @@
 --TEST--
-Test xzopen() function : error conditions 
+Test xzopen() function : error conditions
 --SKIPIF--
-<?php 
+<?php
 if (!extension_loaded("xz")) {
-	print "skip - XZ extension not loaded"; 
-}	 
+	print "skip - XZ extension not loaded";
+}
 ?>
 --FILE--
 <?php
 /* Prototype  : resource xzopen(string filename, string mode)
- * Description: Open a xz file and return a xz file pointer 
+ * Description: Open a xz file and return a xz file pointer
  * Source code: ext/xz/xz.c
- * Alias to functions: 
+ * Alias to functions:
  */
 
 echo "*** Testing xzopen() : error conditions ***\n";

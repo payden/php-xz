@@ -44,7 +44,7 @@ if test "$PHP_XZ" != "no"; then
 
   dnl # --with-xz -> check for lib and symbol presence
   LIBNAME=lzma # you may want to change this
-  LIBSYMBOL=lzma_stream_encoder # you most likely want to change this 
+  LIBSYMBOL=lzma_stream_encoder # you most likely want to change this
 
   PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
   [
