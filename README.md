@@ -1,6 +1,8 @@
 php-xz
 ======
 
+[![Build Status](https://travis-ci.org/udan11/php-xz.svg?branch=master)](https://travis-ci.org/udan11/php-xz)
+
 PHP Extension providing xz (LZMA2) compression/decompression via PHP streams.
 
 ## Installation
