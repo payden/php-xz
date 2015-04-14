@@ -1,0 +1,22 @@
+language: php
+
+php:
+    - 5.4
+    - 5.5
+    - 5.6
+    - nightly
+
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -y liblzma-dev
+
+before_script:
+    - phpize
+    - ./configure
+    - make
+    - sudo make install
+    - echo "extension=xz.so" >> `php --ini | grep "Loaded Configuration File:" | sed -e "s/.*:\s*//"`
+
+matrix:
+    allow_failures:
+        - php: nightly

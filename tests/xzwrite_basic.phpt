@@ -1,9 +1,9 @@
 --TEST--
 Test function xzwrite() by calling it with its expected arguments
 --SKIPIF--
-<?php 
+<?php
 if (!extension_loaded("xz")) {
-	print "skip - XZ extension not loaded"; 
+	print "skip - XZ extension not loaded";
 }
 ?>
 --FILE--

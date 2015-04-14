@@ -116,7 +116,7 @@ static int php_xz_init_encoder(struct php_xz_stream_data_t *self)
   if (lzma_lzma_preset(&opt_lzma2, self->level)) {
     return 0;
   }
-  
+
   lzma_filter filters[] = {
     { .id = LZMA_FILTER_LZMA2, .options = &opt_lzma2 },
     { .id = LZMA_VLI_UNKNOWN, .options = NULL },
@@ -244,7 +244,7 @@ static int php_xziop_close(php_stream *stream, int close_handle TSRMLS_DC)
         strm->avail_out = self->out_buf_sz;
       }
 
-  
+
     } while (lz_ret == LZMA_OK);
   }
 
