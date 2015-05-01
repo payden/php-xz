@@ -3,7 +3,7 @@ Test function xzwrite() by calling it with its expected arguments
 --SKIPIF--
 <?php
 if (!extension_loaded("xz")) {
-    print("XZ extension is not loaded!");
+	print("XZ extension is not loaded!");
 }
 ?>
 --FILE--

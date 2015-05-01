@@ -3,7 +3,7 @@ Test `xzencode` and `xzdecode`: big inputs.
 --SKIPIF--
 <?php
 if (!extension_loaded("xz")) {
-    print("XZ extension is not loaded!");
+	print("XZ extension is not loaded!");
 }
 ?>
 --FILE--
@@ -29,7 +29,7 @@ $chunk = '';
 
 // Generating a random chunk.
 for ($i = 0; $i < $chunkSize; ++$i) {
-    $chunk .= chr(rand(0, 255)); // adds one random byte
+	$chunk .= chr(rand(0, 255)); // adds one random byte
 }
 
 /**
@@ -40,7 +40,7 @@ $str = '';
 
 // Generating a random string.
 for ($i = 0; $i < $chunkNumber; ++$i) {
-    $str .= $chunk;
+	$str .= $chunk;
 }
 
 var_dump($chunkSize * $chunkNumber == strlen($str));
