@@ -3,21 +3,18 @@ php-xz
 
 [![Build Status](https://travis-ci.org/udan11/php-xz.svg?branch=master)](https://travis-ci.org/udan11/php-xz)
 
-PHP Extension providing xz (LZMA2) compression/decompression via PHP streams.
+PHP Extension providing XZ (LZMA2) compression/decompression functions.
 
 ## Installation
 
 To install as module, perform the following steps:
 
 ```bash
-cd /path/to/php/extension_dir
-git clone https://github.com/payden/php-xz xz
-cd xz && phpize && ./configure && make && sudo make install
+git clone https://github.com/udan11/php-xz
+cd php-xz && phpize && ./configure && make && sudo make install
 ```
 
 Do not forget to add `extension = xz.so` to your `php.ini`.
-
-__TIP:__ If you want to quickly find out where the extension directory is located, you can use the following command: `php -i | grep 'extension_dir'`.
 
 ## Requirements
 
