@@ -6,6 +6,9 @@ php:
     - 5.6
     - nightly
 
+env:
+    - TEST_PHP_ARGS="-q"
+
 before_install:
     - sudo apt-get update -qq
 
